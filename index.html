@@ -6,15 +6,26 @@
 </head>
 <body>
 
-    <!--<input id="queryInput" type="text">-->
 
-    <datalist id='autocompleteData'>
-
-    </datalist>
-
-    <form id = "suggestions">
-        <input     type = "text" id = "queryInput" autocomplete list="autocompleteData"/>
+    <form id="inputs">
+        <script>
+            for (let inIdx=0; inIdx < 2; inIdx++)
+            {
+                document.write(`
+                    <label>IN ${inIdx}</label>
+                    <br/>
+                    <input type="text" class="input" value="0">
+                    <br/>
+                `);
+            }
+        </script>
+        <br/>
+        <input type="button" value="Submit" id="submitBut">
     </form>
+
+    <br/><br/>
+    <div id="result">
+    </div>
 
     <script src="src/index.ts"></script>
 
