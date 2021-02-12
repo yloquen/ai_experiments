@@ -1,4 +1,4 @@
-const LAYERS = [2,3,3,1];
+const LAYERS = [2,4,1];
 
 const activations = [];
 const sigmoidDerivatives = [];
@@ -15,6 +15,12 @@ function rnd(seed)
 {
     cnt++;
     return Math.sin((cnt + 28983) * Math.pow(5, seed * 3));
+}
+
+
+function getInitVal()
+{
+    return -1 + Math.random() * 2;
 }
 
 
@@ -35,7 +41,7 @@ function init()
 
         for (let neuronIdx=0; neuronIdx < numNeurons; neuronIdx++)
         {
-            biases[layerIdx][neuronIdx] = -.5 + Math.random();
+            biases[layerIdx][neuronIdx] = getInitVal();
             biasVector[layerIdx][neuronIdx] = 0;
             activations[layerIdx][neuronIdx] = 0;
             sigmoidDerivatives[layerIdx][neuronIdx] = 0;
@@ -48,7 +54,7 @@ function init()
                 weightVector[layerIdx].push(wv);
                 for (let nextNeuronIdx=0; nextNeuronIdx < nextNumNeurons; nextNeuronIdx++)
                 {
-                    w.push(-.5 + Math.random());
+                    w.push(getInitVal());
                     wv.push(0);
                 }
             }
@@ -92,25 +98,30 @@ function backPass(targetOutputs)
     for (let neuronIdx=0; neuronIdx < activations[layerIdx].length; neuronIdx++)
     {
         const actVal = activations[layerIdx][neuronIdx];
-        dEdZ[layerIdx].push((targetOutputs[neuronIdx] - actVal) * actVal * (1-actVal));
+        dEdZ[layerIdx][neuronIdx] = (targetOutputs[neuronIdx] - actVal) * actVal * (1-actVal);
     }
 
     while(layerIdx > 0)
     {
         const numNeurons = LAYERS[layerIdx];
+        const numPrevNeurons = LAYERS[layerIdx-1];
 
-        for (let weightIdx=0; weightIdx < weights[layerIdx-1].length; weightIdx++)
+        for (let prevNeuronIdx=0; prevNeuronIdx < numPrevNeurons; prevNeuronIdx++)
         {
             let sum=0;
             for (let neuronIdx=0; neuronIdx < numNeurons; neuronIdx++)
             {
                 const d = dEdZ[layerIdx][neuronIdx];
-                const w = weights[layerIdx-1][weightIdx][neuronIdx];
-                weightVector[layerIdx-1][weightIdx][neuronIdx] = d * activations[layerIdx-1][weightIdx];
-                biasVector[layerIdx][neuronIdx] = d;
+                const w = weights[layerIdx-1][prevNeuronIdx][neuronIdx];
+                weightVector[layerIdx-1][prevNeuronIdx][neuronIdx] += d * activations[layerIdx-1][prevNeuronIdx];
                 sum += d*w;
             }
-            dEdZ[layerIdx-1][weightIdx] = sum  * sigmoidDerivatives[layerIdx-1][weightIdx];
+            dEdZ[layerIdx-1][prevNeuronIdx] = sum  * sigmoidDerivatives[layerIdx-1][prevNeuronIdx];
+        }
+
+        for (let neuronIdx=0; neuronIdx < numNeurons; neuronIdx++)
+        {
+            biasVector[layerIdx][neuronIdx] += dEdZ[layerIdx][neuronIdx];
         }
 
         layerIdx--;
@@ -136,6 +147,7 @@ function test(inputs, outputs)
                 const error = calcError(outputs);
                 weights[layerIdx][inIdx][weightIdx] += delta;
                 forwardPass(inputs);
+                backPass(outputs);
                 const deltaError = calcError(outputs) - error;
                 const derivative = deltaError/delta;
                 s += (derivative.toFixed(8) + " : " + weightVector[layerIdx][inIdx][weightIdx].toFixed(8) + "<br/>");
@@ -174,9 +186,9 @@ function calcError(targetOutputs)
 
 function train(rate)
 {
-    for (let i=0; i < 1000; i++)
+    for (let i=0; i < 100000; i++)
     {
-        const batchSize = 1;
+        const batchSize = 10;
         const batchSizeReciprocal = 1 / batchSize;
 
         for (let batchIndex = 0; batchIndex < batchSize; batchIndex++)
@@ -184,7 +196,7 @@ function train(rate)
             const ins = generateIns();
             const outs = generateOuts(ins);
             forwardPass(ins);
-            backPass(outs);
+            backPass(generateOuts(ins));
         }
 
         for (let layerIdx=0; layerIdx < weights.length; layerIdx++)
@@ -196,7 +208,7 @@ function train(rate)
                     weights[layerIdx][inIdx][weightIdx] += weightVector[layerIdx][inIdx][weightIdx] * batchSizeReciprocal * rate;
                     weightVector[layerIdx][inIdx][weightIdx] = 0;
                 }
-                biases[layerIdx][inIdx] += biasVector[layerIdx][inIdx] * batchSizeReciprocal * rate ;
+                biases[layerIdx][inIdx] += biasVector[layerIdx][inIdx] * batchSizeReciprocal * rate;
                 biasVector[layerIdx][inIdx] = 0;
             }
         }
@@ -239,9 +251,10 @@ document.getElementById('submitBut').onclick = () =>
 
     forwardPass(inArr);
     backPass(generateOuts(inArr));
-    let s = test(inArr, generateOuts(inArr));
+    let s = "";//test(inArr, generateOuts(inArr));
 
     activations[activations.length-1].forEach( (v,i) => s += ("OUT " + i + " > " + v.toFixed(4) + "\n"));
+
     s += "<br/>Error : " + calcError(generateOuts(inArr));
     document.getElementById("result").innerHTML = s;
 
@@ -254,7 +267,7 @@ document.getElementById('submitBut').onclick = () =>
 //backPass([0]);
 //test();
 
-train(.1);
+train(.02);
 
 //debugger;
 
