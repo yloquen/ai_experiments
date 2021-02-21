@@ -4,17 +4,16 @@ export class TicTacToeBoard
 {
 
 
-    static POSITION_TO_LINE =
+    static LINES =
     [
+        [0,1,2],
+        [3,4,5],
+        [6,7,8],
         [0,3,6],
-        [1,3],
-        [2,3,7],
-        [0,4],
-        [1,4,6,7],
-        [2,4],
-        [0,5,7],
-        [1,5],
-        [2,5,6]
+        [1,4,7],
+        [2,5,8],
+        [0,4,8],
+        [2,4,6]
     ];
 
     public state:number[];
@@ -32,8 +31,6 @@ export class TicTacToeBoard
     constructor()
     {
         this.state = [];
-        this.lineState = [];
-        this.lineCounter = [];
         this.availableMoves = [];
         this.movesList = [];
         this.scores = [];
@@ -61,51 +58,34 @@ export class TicTacToeBoard
     }
 
 
-    makeMove(posIndex, score)
+    makeMove(posIndex)
     {
         if (this.state[posIndex] !== 0 || this.gameState !== E_GameState.RUNNING)
         {
             debugger;
         }
 
-        this.scores.push(score);
         this.state[posIndex] = this.playerToMove;
-        const lines = TicTacToeBoard.POSITION_TO_LINE[posIndex];
 
-        for (let i=0; i < lines.length; i++)
+        const numLines = TicTacToeBoard.LINES.length;
+        for (let lineIdx=0; lineIdx < numLines; lineIdx++)
         {
-            const lineIdx = lines[i];
-            const lineState = this.lineState[lineIdx];
-            if (lineState === E_LineState.OPEN || lineState === this.playerToMove)
+            const line = TicTacToeBoard.LINES[lineIdx];
+            if (line[0] === line[1] && line[1] === line[2] && line[0] !== 0)
             {
-                this.lineState[lineIdx] = this.playerToMove;
-                this.lineCounter[lineIdx]--;
-                if (this.lineCounter[lineIdx] === 0)
-                {
-                    this.gameState = this.playerToMove;
-                }
-            }
-            else if (lineState !== this.playerToMove)
-            {
-                if (this.lineState[lineIdx] !== E_LineState.BLOCKED)
-                {
-                    this.lineState[lineIdx] = E_LineState.BLOCKED;
-                    this.numOpenLines--;
-                    if (this.numOpenLines === 0)
-                    {
-                        this.gameState = E_GameState.DRAW;
-                    }
-                }
+                this.gameState = line[0];
             }
         }
+
         this.movesList.push(posIndex);
         this.playerToMove *= -1;
     }
 
 
-    undoMove(movePos)
+    undoMove(movePos:number):void
     {
-
+        this.gameState = E_GameState.RUNNING;
+        this.state[movePos] = 0;
     }
 
 

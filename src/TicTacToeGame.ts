@@ -11,9 +11,27 @@ export class TicTacToeGame
     constructor()
     {
         this.board = new TicTacToeBoard();
-        this.neuralNetwork = new NeuralNetwork([9,100,100,100,1]);
+        this.neuralNetwork = new NeuralNetwork([9,10,10,10,1]);
         this.neuralNetwork.init();
     }
+
+
+    monteCarloSearch()
+    {
+        this.neuralNetwork.forwardPass(this.board.state);
+        const score = this.neuralNetwork.getOutputs()[0];
+
+        const moves = this.board.getAvailableMoves();
+
+        for (let moveIdx=0; moveIdx < moves.length; moveIdx++)
+        {
+            const movePos = moves[moveIdx];
+            this.board.makeMove(movePos);
+
+            this.board.undoMove(movePos);
+        }
+    }
+
 
     train(numEpochs:number)
     {
@@ -25,27 +43,7 @@ export class TicTacToeGame
             for (let batchIdx=0; batchIdx < batchSize; batchIdx++)
             {
                 this.board.reset();
-                while(this.board.gameState === E_GameState.RUNNING)
-                {
-                    const bestMove = this.findBestMove();
-                    this.board.makeMove(bestMove.pos, bestMove.score);
-                }
-
-                let currScore = (this.board.gameState + 1) * .5;
-                let scoreStep = (.5 - currScore) / this.board.movesList.length;
-
-                while(this.board.movesList.length > 0)
-                {
-                    this.neuralNetwork.forwardPass(this.board.state);
-                    this.neuralNetwork.backPass([currScore]);
-
-                    batchError += this.neuralNetwork.calcError([currScore]);
-
-                    currScore += scoreStep;
-
-                    const move = this.board.movesList.pop();
-                    this.board.state[move] = 0;
-                }
+                this.monteCarloSearch();
             }
 
             this.neuralNetwork.applyTrainVector(.2, batchSize, 1);

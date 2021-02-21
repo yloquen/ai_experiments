@@ -22,12 +22,12 @@ const playMove = () =>
 {
     if (g.board.gameState === E_GameState.RUNNING)
     {
-        g.board.makeMove(document.getElementsByClassName('input')[0].value, 0);
+        g.board.makeMove(document.getElementsByClassName('input')[0].value);
 
         if (g.board.gameState === E_GameState.RUNNING)
         {
             const bestMove = g.findBestMove();
-            g.board.makeMove(bestMove.pos, 0);
+            g.board.makeMove(bestMove.pos);
         }
     }
 
